@@ -28,7 +28,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const state = { uid: null, products: [], sales: [] };
+const state = {
+  uid: null,
+  products: [],
+  sales: [],
+  alertFilter: "all",
+  alertSearch: "",
+};
 
 const authView = document.getElementById("auth-view");
 const panelView = document.getElementById("panel-view");
@@ -54,6 +60,12 @@ const alertsList = document.getElementById("alerts-list");
 
 const scanBtn = document.getElementById("scan-btn");
 const scannerEl = document.getElementById("scanner");
+const alertSearch = document.getElementById("alert-search");
+const alertFilterButtons = document.querySelectorAll(".alert-filter-btn");
+const criticalCountEl = document.getElementById("critical-count");
+const warningCountEl = document.getElementById("warning-count");
+const totalAlertCountEl = document.getElementById("total-alert-count");
+const alertTabBtn = document.querySelector('button[data-tab="alertas"]');
 
 function mxn(n) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
@@ -125,6 +137,8 @@ productForm.addEventListener("submit", async (e) => {
     price: Number(document.getElementById("product-price").value),
     expiryDate: document.getElementById("product-expiry").value,
     type: document.getElementById("product-type").value,
+    supplier: document.getElementById("product-supplier").value.trim(),
+    minStock: Number(document.getElementById("product-min-stock").value) || 5,
     active: true,
     createdAt: serverTimestamp(),
   };
@@ -200,6 +214,22 @@ themeBtn.addEventListener("click", () => {
 });
 
 seedDemoBtn.addEventListener("click", seedDemoData);
+
+if (alertSearch) {
+  alertSearch.addEventListener("input", (e) => {
+    state.alertSearch = e.target.value.trim();
+    renderAlerts();
+  });
+}
+if (alertFilterButtons.length) {
+  alertFilterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      state.alertFilter = button.dataset.filter;
+      alertFilterButtons.forEach((btn) => btn.classList.toggle("active", btn === button));
+      renderAlerts();
+    });
+  });
+}
 
 function datePlusDays(days) {
   const d = new Date();
@@ -317,18 +347,22 @@ function renderAll() {
 }
 
 function renderKpis() {
+  const monthRevenue = state.sales
+    .filter((s) => s.createdAt?.toDate?.()
+      ? new Date(s.createdAt.toDate()) >= daysAgoDate(30)
+      : false)
+    .reduce((a, s) => a + Number(s.revenue || 0), 0);
+  const activeProducts = state.products.filter((p) => p.active !== false).length;
+  const alertCount = getAlertItems().length;
   const totalRevenue = state.sales.reduce((a, s) => a + Number(s.revenue || 0), 0);
   const totalProfit = state.sales.reduce((a, s) => a + Number(s.profit || 0), 0);
-  const soldUnits = state.sales.reduce((a, s) => a + Number(s.qty || 0), 0);
-  const activeProducts = state.products.filter((p) => p.active !== false).length;
-  const avgTicket = state.sales.length ? totalRevenue / state.sales.length : 0;
+  const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
   const kpis = [
-    ["Ventas", mxn(totalRevenue)],
-    ["Ganancias", mxn(totalProfit)],
-    ["Productos vendidos", soldUnits],
-    ["Productos activos", activeProducts],
-    ["Ticket promedio", mxn(avgTicket)],
+    ["Ventas del mes", mxn(monthRevenue)],
+    ["Productos", activeProducts],
+    ["Alertas", alertCount],
+    ["Margen", `${margin.toFixed(1)}%`],
   ];
 
   kpiGrid.innerHTML = kpis.map(([label, value]) => `<div class="kpi"><h4>${label}</h4><strong>${value}</strong></div>`).join("");
@@ -344,12 +378,14 @@ function renderFinancialMetrics() {
   const totalRevenue = state.sales.reduce((a, s) => a + Number(s.revenue || 0), 0);
   const totalProfit = state.sales.reduce((a, s) => a + Number(s.profit || 0), 0);
   const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+  const alertCount = getAlertItems().length;
+  const productsWithLowStock = state.products.filter((p) => Number(p.stock || 0) <= Number(p.minStock || 5)).length;
 
   financialMetrics.innerHTML = [
+    `Valor de inventario: ${mxn(invValue)}`,
     `Rotación de inventario: ${rotation.toFixed(2)}x`,
     `Margen promedio: ${margin.toFixed(1)}%`,
-    `Tendencia de ventas: ${trendText(totalRevenue)}`,
-    `Evaluación de ventas: ${state.sales.length >= 10 ? "Alta actividad" : "Actividad inicial"}`,
+    `Alertas activas: ${alertCount} (${productsWithLowStock} bajo stock)`,
   ].map((t) => `<li>${t}</li>`).join("");
 }
 
@@ -367,7 +403,10 @@ function trendText(current) {
 function renderProducts() {
   const rows = state.products
     .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-    .map((p) => `<li>${safe(p.name)} · ${safe(p.category)} · Stock: ${p.stock} · ${mxn(p.price)} · ${safe(p.type || "dental")}</li>`);
+    .map((p) => {
+      const lowStock = Number(p.stock || 0) <= Number(p.minStock || 5);
+      return `<li>${safe(p.name)} · ${safe(p.category)} · Stock: ${p.stock} ${lowStock ? "(bajo)" : ""} · ${mxn(p.price)} · ${safe(p.type || "dental")} · ${safe(p.supplier || "Sin proveedor")} ${p.active === false ? "· Inactivo" : ""}</li>`;
+    });
   productsList.innerHTML = rows.length ? rows.join("") : "<li>Sin productos.</li>";
 }
 
@@ -378,15 +417,84 @@ function renderSales() {
   salesList.innerHTML = rows.length ? rows.join("") : "<li>Sin ventas.</li>";
 }
 
-function renderAlerts() {
-  const alerts = state.products
-    .filter((p) => p.expiryDate)
-    .map((p) => ({ ...p, d: daysUntil(p.expiryDate) }))
-    .filter((p) => p.d <= 30)
-    .sort((a, b) => a.d - b.d)
-    .map((p) => `<li>${safe(p.name)} · caduca en ${p.d} día(s) (${safe(p.expiryDate)})</li>`);
+function getAlertItems() {
+  return state.products
+    .map((p) => {
+      const days = p.expiryDate ? daysUntil(p.expiryDate) : null;
+      const lowStock = Number(p.stock || 0) <= Number(p.minStock || 5);
+      const soonToExpire = days !== null && days <= 90;
+      if (!soonToExpire && !lowStock) return null;
 
-  alertsList.innerHTML = alerts.length ? alerts.join("") : "<li>Sin alertas críticas.</li>";
+      let severity = null;
+      if (days !== null) {
+        if (days <= 10) severity = "critical";
+        else if (days <= 30) severity = "warning";
+        else severity = "normal";
+      }
+      if (lowStock && severity !== "critical") {
+        severity = severity || "warning";
+      }
+      if (!severity) return null;
+
+      return { ...p, days, lowStock, severity };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const order = { critical: 0, warning: 1, normal: 2 };
+      return (order[a.severity] - order[b.severity]) || (a.days ?? 999) - (b.days ?? 999);
+    });
+}
+
+function renderAlerts() {
+  const alerts = getAlertItems();
+  const search = state.alertSearch.toLowerCase();
+
+  const filtered = alerts.filter((p) => {
+    if (state.alertFilter !== "all" && p.severity !== state.alertFilter) return false;
+    if (!search) return true;
+    return [p.name, p.category, p.supplier, p.barcode]
+      .some((field) => String(field || "").toLowerCase().includes(search));
+  });
+
+  const criticalCount = alerts.filter((p) => p.severity === "critical").length;
+  const warningCount = alerts.filter((p) => p.severity === "warning").length;
+  const totalCount = alerts.length;
+
+  if (criticalCountEl) criticalCountEl.textContent = criticalCount;
+  if (warningCountEl) warningCountEl.textContent = warningCount;
+  if (totalAlertCountEl) totalAlertCountEl.textContent = totalCount;
+  if (alertTabBtn) alertTabBtn.textContent = `Alertas ${totalCount}`;
+
+  const rows = filtered.length
+    ? filtered.map((p) => {
+        const progress = p.days !== null ? Math.max(12, Math.min(100, 100 - (p.days / 90) * 100)) : 28;
+        const badgeLabel = p.severity === "critical" ? "CRÍTICO" : p.severity === "warning" ? "ADVERTENCIA" : "NORMAL";
+        const note = p.severity === "critical"
+          ? "⚠️ Acción urgente: Programar liquidación o devolución al proveedor"
+          : p.severity === "warning"
+          ? "Revisa stock y planifica rotación"
+          : "Seguimiento activo";
+
+        return `<li class="alert-item">
+            <div class="alert-item-header">
+              <div>
+                <div class="alert-item-title">${safe(p.name)}</div>
+                <div class="alert-item-subtitle">${safe(p.category)} · ${safe(p.supplier || "Sin proveedor")}</div>
+              </div>
+              <span class="alert-badge ${p.severity}">${badgeLabel}</span>
+            </div>
+            <div class="alert-item-grid">
+              <div><span>Stock</span><strong>${Number(p.stock || 0)} unidades</strong></div>
+              <div><span>Caducidad</span><strong>${safe(p.expiryDate || "N/A")}</strong></div>
+              <div><span>Días restantes</span><strong>${p.days !== null ? `${p.days} días` : "Sin fecha"}</strong></div>
+            </div>
+            <div class="alert-progress"><div class="alert-progress-fill" style="width: ${progress}%;"></div></div>
+            <p class="alert-note">${safe(note)}</p>
+          </li>`;
+      })
+    : ["<li class=\"alert-empty\">No hay alertas con estos filtros.</li>"];
+
+  alertsList.innerHTML = rows.join("");
 }
 
 function renderTopProducts() {
@@ -401,6 +509,13 @@ function renderCategories() {
   for (const s of state.sales) map.set(s.category || "Sin categoría", (map.get(s.category || "Sin categoría") || 0) + Number(s.revenue || 0));
   const rows = [...map.entries()].sort((a, b) => b[1] - a[1]);
   categoryDistribution.innerHTML = rows.length ? rows.map(([c, v]) => `<li>${safe(c)} · ${mxn(v)}</li>`).join("") : "<li>Sin datos.</li>";
+}
+
+function daysAgoDate(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 async function renderActivity() {

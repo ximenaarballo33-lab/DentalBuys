@@ -50,13 +50,75 @@
         </aside>
 
         <main class="content">
-          <header>
-            <h1 id="tab-title">Dashboard</h1>
-            <p class="muted">Control operativo y financiero en tiempo real.</p>
-            <button id="seed-demo-btn" type="button">Cargar demo</button>
+          <header class="panel-header">
+            <div class="panel-copy">
+              <span class="eyebrow">Plataforma SaaS para Gestión Dental</span>
+              <h1 id="tab-title">Dashboard</h1>
+              <p class="muted">Control total de inventario, alertas automáticas y análisis financiero con una experiencia moderna y clara.</p>
+            </div>
+            <div class="panel-actions">
+              <button id="seed-demo-btn" type="button">Cargar demo</button>
+              <button class="ghost" type="button">Ver demo</button>
+            </div>
           </header>
 
           <section id="dashboard" class="tab-panel active">
+            <div class="hero-banner">
+              <div class="hero-copy">
+                <span class="eyebrow">Gestión inteligente para tu negocio dental</span>
+                <h2>Monitorea ventas, inventario y alertas desde un solo lugar.</h2>
+                <p class="muted">Optimiza tu depósito dental con métricas claras, alertas automáticas y un flujo de trabajo diseñado para crecer.</p>
+              </div>
+              <div class="hero-preview">
+                <div class="hero-preview-card">
+                  <div class="hero-preview-title">Vista previa del dashboard</div>
+                  <div class="hero-preview-items">
+                    <span>Ventas del mes</span>
+                    <strong>$67,000</strong>
+                  </div>
+                  <div class="hero-preview-items">
+                    <span>Productos</span>
+                    <strong>1,234</strong>
+                  </div>
+                  <div class="hero-preview-items">
+                    <span>Alertas</span>
+                    <strong>8</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h4>Control de Inventario</h4>
+                <p>Gestiona productos, stock y proveedores en tiempo real.</p>
+              </article>
+              <article class="feature-card">
+                <div class="feature-icon">🚨</div>
+                <h4>Alertas Inteligentes</h4>
+                <p>Recibe notificaciones de productos próximos a vencer o con bajo stock.</p>
+              </article>
+              <article class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h4>Analytics Avanzado</h4>
+                <p>Visualiza métricas y tendencias para tomar decisiones basadas en datos.</p>
+              </article>
+              <article class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h4>Dashboard Financiero</h4>
+                <p>Monitorea ventas, ganancias y rendimiento de productos en un solo lugar.</p>
+              </article>
+              <article class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h4>Automatización</h4>
+                <p>Ahorra tiempo con procesos y flujos de trabajo automatizados.</p>
+              </article>
+              <article class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h4>Seguridad Premium</h4>
+                <p>Tus datos protegidos con controles y prácticas seguras.</p>
+              </article>
+            </div>
             <div class="kpi-grid" id="kpi-grid"></div>
             <div class="split">
               <article class="card">
@@ -140,6 +202,12 @@
                       <option value="alimentario">Alimentario</option>
                     </select>
                   </label>
+                  <label>Proveedor
+                    <input id="product-supplier" placeholder="Proveedor dental" />
+                  </label>
+                  <label>Stock mínimo
+                    <input id="product-min-stock" type="number" min="0" value="5" />
+                  </label>
                   <button type="submit">Guardar producto</button>
                 </form>
               </article>
@@ -151,9 +219,45 @@
           </section>
 
           <section id="alertas" class="tab-panel">
-            <article class="card">
-              <h3>Alertas de caducidad (30 días)</h3>
-              <ul id="alerts-list" class="list"></ul>
+            <article class="card alert-card-header">
+              <div>
+                <h1>Alertas de Vencimiento</h1>
+                <p class="muted">Monitorea productos próximos a expirar y toma acción antes de perder stock.</p>
+              </div>
+            </article>
+
+            <div class="alert-summaries">
+              <article class="card alert-summary-card critical">
+                <span>Crítico</span>
+                <strong id="critical-count">0</strong>
+                <p>Vencen en ≤10 días</p>
+              </article>
+              <article class="card alert-summary-card warning">
+                <span>Advertencia</span>
+                <strong id="warning-count">0</strong>
+                <p>Vencen en 11-30 días</p>
+              </article>
+              <article class="card alert-summary-card normal">
+                <span>Total monitoreado</span>
+                <strong id="total-alert-count">0</strong>
+                <p>Productos bajo seguimiento</p>
+              </article>
+            </div>
+
+            <article class="card alert-filters">
+              <div class="alert-search">
+                <input id="alert-search" placeholder="Buscar productos..." />
+              </div>
+              <div class="filter-buttons">
+                <button type="button" class="alert-filter-btn active" data-filter="all">Todos</button>
+                <button type="button" class="alert-filter-btn" data-filter="critical">Crítico</button>
+                <button type="button" class="alert-filter-btn" data-filter="warning">Advertencia</button>
+                <button type="button" class="alert-filter-btn" data-filter="normal">Normal</button>
+              </div>
+            </article>
+
+            <article class="card alert-list-card">
+              <ul id="alerts-list" class="list alerts-list"></ul>
             </article>
           </section>
         </main>
