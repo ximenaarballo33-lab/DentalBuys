@@ -2,7 +2,6 @@ name = "dental-buys"
 compatibility_date = "2026-05-30"
 account_id = "ce61d07f4dc433733ab3b3e96f213a57"
 workers_dev = true
-type = "javascript"
 main = "workers-site/index.js"
 
 [site]

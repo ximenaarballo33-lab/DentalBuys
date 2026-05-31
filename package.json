@@ -8,6 +8,8 @@
     "@cloudflare/kv-asset-handler": "^0.1.3"
   },
   "scripts": {
-    "deploy": "wrangler deploy"
+    "build": "echo \"Ready for deploy\"",
+    "deploy": "wrangler deploy",
+    "publish": "wrangler pages publish . --project-name dental-buys"
   }
 }
