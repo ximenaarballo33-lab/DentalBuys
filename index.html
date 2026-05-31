@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dental Buys | Gestión de Depósito Dental</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <section id="auth-view" class="auth-shell">
+        <div class="auth-card">
+          <div class="brand-head">
+            <img src="./logo-dental-buys.svg" alt="Dental Buys" class="brand-logo" />
+            <h1>Dental Buys</h1>
+          </div>
+          <p class="muted">Inventario, ventas y analítica para depósitos dentales.</p>
+          <form id="login-form" class="form-grid">
+            <label>Email
+              <input id="email" type="email" required placeholder="admin@dentalbuys.com" />
+            </label>
+            <label>Contraseña
+              <input id="password" type="password" required placeholder="********" />
+            </label>
+            <button type="submit">Iniciar sesión</button>
+          </form>
+          <small class="muted">Sistema de usuario único con acceso completo.</small>
+          <p id="auth-error" class="error"></p>
+        </div>
+      </section>
+
+      <section id="panel-view" class="hidden">
+        <aside class="sidebar">
+          <div class="brand-head">
+            <img src="./logo-dental-buys.svg" alt="Dental Buys" class="brand-logo" />
+            <h2>Dental Buys</h2>
+          </div>
+          <p id="profile-badge" class="badge"></p>
+          <nav>
+            <button data-tab="dashboard" class="tab-btn active">Dashboard</button>
+            <button data-tab="ventas" class="tab-btn">Ventas</button>
+            <button data-tab="inventario" class="tab-btn">Inventario</button>
+            <button data-tab="alertas" class="tab-btn">Alertas</button>
+          </nav>
+          <button id="theme-btn" class="ghost">Modo oscuro</button>
+          <button id="logout-btn" class="danger">Cerrar sesión</button>
+        </aside>
+
+        <main class="content">
+          <header>
+            <h1 id="tab-title">Dashboard</h1>
+            <p class="muted">Control operativo y financiero en tiempo real.</p>
+            <button id="seed-demo-btn" type="button">Cargar demo</button>
+          </header>
+
+          <section id="dashboard" class="tab-panel active">
+            <div class="kpi-grid" id="kpi-grid"></div>
+            <div class="split">
+              <article class="card">
+                <h3>Analíticas financieras</h3>
+                <ul id="financial-metrics" class="list"></ul>
+              </article>
+              <article class="card">
+                <h3>Actividades recientes</h3>
+                <ul id="recent-activity" class="list"></ul>
+              </article>
+            </div>
+            <div class="split">
+              <article class="card">
+                <h3>Distribución por categoría</h3>
+                <ul id="category-distribution" class="list"></ul>
+              </article>
+              <article class="card">
+                <h3>Productos destacados</h3>
+                <ul id="top-products" class="list"></ul>
+              </article>
+            </div>
+          </section>
+
+          <section id="ventas" class="tab-panel">
+            <div class="split">
+              <article class="card">
+                <h3>Registrar transacción</h3>
+                <form id="sale-form" class="form-grid">
+                  <label>Código de barras
+                    <div class="scan-row">
+                      <input id="sale-barcode" required placeholder="7501234567890" />
+                      <button type="button" id="scan-btn">Escanear</button>
+                    </div>
+                  </label>
+                  <label>Cantidad
+                    <input id="sale-qty" type="number" min="1" value="1" required />
+                  </label>
+                  <label>Precio unitario (MXN)
+                    <input id="sale-price" type="number" min="0" step="0.01" required />
+                  </label>
+                  <button type="submit">Guardar venta</button>
+                </form>
+                <div id="scanner" class="scanner hidden"></div>
+              </article>
+              <article class="card">
+                <h3>Ventas recientes</h3>
+                <ul id="sales-list" class="list"></ul>
+              </article>
+            </div>
+          </section>
+
+          <section id="inventario" class="tab-panel">
+            <div class="split">
+              <article class="card">
+                <h3>Agregar producto</h3>
+                <form id="product-form" class="form-grid">
+                  <label>Nombre
+                    <input id="product-name" required placeholder="Resina Dental X" />
+                  </label>
+                  <label>Código de barras
+                    <input id="product-barcode" required placeholder="7501234567890" />
+                  </label>
+                  <label>Categoría
+                    <input id="product-category" required placeholder="Restauración" />
+                  </label>
+                  <label>Stock
+                    <input id="product-stock" type="number" value="0" required />
+                  </label>
+                  <label>Costo unitario (MXN)
+                    <input id="product-cost" type="number" min="0" step="0.01" required />
+                  </label>
+                  <label>Precio unitario (MXN)
+                    <input id="product-price" type="number" min="0" step="0.01" required />
+                  </label>
+                  <label>Caducidad
+                    <input id="product-expiry" type="date" required />
+                  </label>
+                  <label>Tipo
+                    <select id="product-type" required>
+                      <option value="dental">Dental</option>
+                      <option value="alimentario">Alimentario</option>
+                    </select>
+                  </label>
+                  <button type="submit">Guardar producto</button>
+                </form>
+              </article>
+              <article class="card">
+                <h3>Productos activos</h3>
+                <ul id="products-list" class="list"></ul>
+              </article>
+            </div>
+          </section>
+
+          <section id="alertas" class="tab-panel">
+            <article class="card">
+              <h3>Alertas de caducidad (30 días)</h3>
+              <ul id="alerts-list" class="list"></ul>
+            </article>
+          </section>
+        </main>
+      </section>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
