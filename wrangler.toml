@@ -1,4 +1,24 @@
 name = "dental-buys"
 compatibility_date = "2026-05-30"
-
 account_id = "ce61d07f4dc433733ab3b3e96f213a57"
+workers_dev = true
+type = "javascript"
+main = "workers-site/index.js"
+
+[site]
+bucket = "./"
+include = ["**/*"]
+exclude = [
+  "**/node_modules/**",
+  ".git/**",
+  "firebase-config.js",
+  "firebase-config.example.js",
+  "firestore.rules",
+  "firestore.indexes.json",
+  ".firebaserc",
+  "wrangler.toml",
+  "package.json",
+  "package-lock.json",
+  "README.md",
+  "workers-site/**"
+]
